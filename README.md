@@ -86,6 +86,19 @@ python3 -m http.server 8000
 
   Toasts announce each bond and each newly completed molecule.
 
+### Built for iPad (and other touch devices)
+* **One finger** on a nucleus drags that atom. One finger on empty space orbits, **pinch** zooms, **two fingers** pan, and a **tap** shows particle info.
+* Safari's page-level pinch and double-tap zoom are blocked so gestures always reach the 3D view (`gesturestart` and `touch-action`).
+* Touch targets are larger on coarse pointers (sliders, toggles, buttons, element palette). Layout respects safe-area insets and works as a home-screen web app (`apple-mobile-web-app-capable`).
+* Tablet-specific layouts:
+  * **Portrait:** the info panel starts collapsed, the status readout sits above the palette, and the camera pulls back so the whole atom fits.
+  * **Landscape:** compact status readout, and the panels flank the atom.
+* Tested at iPad Air/Pro 11" sizes (1180×820 landscape, 820×1180 portrait) and iPad mini (744×1133) at 2× DPR, including a real touch drag of a nucleus.
+
+| iPad landscape | iPad portrait |
+|---|---|
+| ![](screenshots/09-ipad-landscape-co2.png) | ![](screenshots/10-ipad-portrait.png) |
+
 ### Performance
 * Instanced meshes for all protons, neutrons, electrons and bond tubes. A single `LineSegments` buffer holds every trail. Shared orbital geometry is used across atoms.
 * `devicePixelRatio` is capped at 2, with **adaptive resolution** that steps the pixel ratio down if fps drops below 45.
@@ -131,11 +144,13 @@ python3 -m http.server 8000
 4. Builds CH₄ by spawning H atoms, then heats it until bonds break.
 5. Verifies that free atoms placed near each other self-assemble with the right geometry: CO₂ 180°, H₂O 104.5°, HCN 180°, NH₃ 107°, C₂H₆ 109.5°.
 6. Tests keyboard movement and renders a phone viewport.
+7. Renders iPad landscape and portrait, and drags a nucleus with real touch events.
 
 ```bash
 python3 -m http.server 8812 --bind 127.0.0.1 &
 npm i playwright && npx playwright install chromium   # once
 node tests/screenshots.cjs http://127.0.0.1:8812/
+# or point it at an installed Chrome: CHROME=/usr/bin/google-chrome node tests/screenshots.cjs
 ```
 
 ## Project layout

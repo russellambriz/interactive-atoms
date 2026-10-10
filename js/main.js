@@ -13,7 +13,11 @@ import { ELEMENTS, PARTICLES, ANGSTROM, bondLengthA, bondEnergy, subscript } fro
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 1;
+if (isTouch) document.body.classList.add('touch');
+// iPad Safari: block page-level pinch/double-tap zoom so gestures go to the 3D view
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+
 
 // ------------------------------------------------------------------ renderer
 const container = $('app');
@@ -34,7 +38,10 @@ container.appendChild(labelRenderer.domElement);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 2000);
-const HOME_POS = new THREE.Vector3(5.2, 3.6, 10.2);
+const HOME_BASE = new THREE.Vector3(5.2, 3.6, 10.2);
+const HOME_POS = HOME_BASE.clone();
+function updateHome() { const a = innerWidth / innerHeight; HOME_POS.copy(HOME_BASE).multiplyScalar(a < 1 ? Math.min(1.9, Math.pow(1 / a, 0.9)) : 1); }
+updateHome();
 camera.position.copy(HOME_POS);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -178,6 +185,7 @@ document.querySelectorAll('#hlSeg button').forEach(b => b.onclick = () => setHig
 
 document.querySelectorAll('[data-collapse]').forEach(h => h.onclick = () => $(h.dataset.collapse).classList.toggle('collapsed'));
 if (innerWidth < 720) { $('info').classList.add('collapsed'); $('controls').classList.add('collapsed'); }
+else if (innerWidth < 1100 && innerHeight > innerWidth) { $('info').classList.add('collapsed'); } // tablet portrait
 
 document.querySelectorAll('[data-spawn]').forEach(b => b.onclick = () => spawn(b.dataset.spawn));
 $('demoSel').addEventListener('change', e => { if (e.target.value) loadDemo(e.target.value); e.target.value = ''; e.target.blur(); });
@@ -410,6 +418,7 @@ function loadDemo(name) {
 // ------------------------------------------------------------------ resize
 function onResize() {
   const w = innerWidth, h = innerHeight;
+  updateHome();
   camera.aspect = w / h; camera.updateProjectionMatrix();
   renderer.setSize(w, h); composer.setSize(w, h); labelRenderer.setSize(w, h);
 }

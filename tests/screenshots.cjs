@@ -15,7 +15,7 @@ const shots = [
 ];
 
 (async () => {
-  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
   const errors = [], warnings = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); if (m.type() === 'warning') warnings.push(m.text()); });
@@ -90,6 +90,33 @@ const shots = [
   await m.waitForTimeout(4000);
   await m.screenshot({ path: path.join(OUT, '08-mobile-ethane.png'), timeout: 90000 });
   console.log('mobile pixelRatio', await m.evaluate(() => window.atomLab.state().pixelRatio));
+  await m.close(); await page.close();
+
+  // iPad: landscape + portrait screenshots and a real touch drag of a nucleus (CDP touch events)
+  const IPAD_UA = 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+  for (const [file, w, h, q] of [['09-ipad-landscape-co2.png', 1180, 820, '?capture=1&demo=co2'], ['10-ipad-portrait.png', 820, 1180, '?capture=1']]) {
+    const t = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: IPAD_UA });
+    t.on('console', x => { if (x.type() === 'error') errors.push('[ipad] ' + x.text()); });
+    t.on('pageerror', e => errors.push('[ipad] pageerror: ' + e.message));
+    await t.goto(BASE + q, { waitUntil: 'networkidle' });
+    await t.waitForFunction(() => window.atomLab && document.getElementById('loading').classList.contains('done'), null, { timeout: 90000 });
+    await t.waitForTimeout(3000);
+    await t.screenshot({ path: path.join(OUT, file), timeout: 90000 });
+    if (file.startsWith('10')) {
+      const cdp = await t.context().newCDPSession(t);
+      const [x, y] = await t.evaluate(() => { const v = atomLab.world.atoms[0].pos.clone().project(atomLab.camera); return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight]; });
+      const camBefore = await t.evaluate(() => atomLab.camera.position.toArray());
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (let i = 1; i <= 15; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + i * 8, y: y + i * 4 }] }); await t.waitForTimeout(30); }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await t.evaluate(() => atomLab.advance(1));
+      const r = await t.evaluate(() => atomLab.world.atoms[0].pos.toArray().map(v => +v.toFixed(2)));
+      const camAfter = await t.evaluate(() => atomLab.camera.position.toArray());
+      const camMoved = Math.hypot(...camAfter.map((v, i) => v - camBefore[i]));
+      console.log('iPad touch-drag nucleus -> atom pos', r, 'camera moved', camMoved.toFixed(3), '(should be ~0: drag moves atom, not camera)');
+    }
+    await t.close();
+  }
 
   console.log('WARNINGS', warnings.length, JSON.stringify(warnings.slice(0, 5)));
   console.log('ERRORS', errors.length, JSON.stringify(errors));
