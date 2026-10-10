@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Interactive Atoms · Carbon</title>
+  <meta name="description" content="Interactive 3D carbon atom: nucleus, Bohr shells, quantum orbitals and covalent bonding sandbox built with Three.js." />
+  <meta name="theme-color" content="#05060f" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='6' fill='%23ff5a4a'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%2366e0ff' stroke-width='3'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%2366e0ff' stroke-width='3' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%2366e0ff' stroke-width='3' transform='rotate(120 32 32)'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="loading"><div class="spinner"></div><p>Assembling carbon…</p></div>
+
+  <header id="title" class="glass">
+    <div class="logo">C<small>6</small></div>
+    <div class="title-text">
+      <h1>Carbon Atom Lab</h1>
+      <p>Nucleus · shells · orbitals · bonding</p>
+    </div>
+    <div class="seg" id="viewSeg" role="tablist" aria-label="View mode">
+      <button data-view="bohr" class="on" title="Bohr model (V)">Bohr</button>
+      <button data-view="quantum" title="Quantum orbital clouds (V)">Quantum</button>
+    </div>
+  </header>
+
+  <div id="status" class="glass" aria-live="polite">
+    <span class="status-formula" id="statusFormula">C</span>
+    <span class="status-name" id="statusName">Carbon atom</span>
+    <span class="status-shape" id="statusShape"></span>
+  </div>
+
+  <aside id="controls" class="glass panel">
+    <button class="panel-head" data-collapse="controls"><span>Controls</span><i class="chev"></i></button>
+    <div class="panel-body">
+      <div class="row3">
+        <button id="playBtn" class="btn primary" title="Space">❚❚ Pause</button>
+        <button id="zoomNucleus" class="btn" title="Fly into the nucleus (N)">◎ Nucleus</button>
+        <button id="resetCam" class="btn" title="Frame the scene (F)">⟲ View</button>
+      </div>
+
+      <label class="slider">
+        <span>Animation speed <output id="speedOut">1.00×</output></span>
+        <input type="range" id="speed" min="0.1" max="3" step="0.05" value="1" />
+      </label>
+      <label class="slider heat">
+        <span>Heat (energy) <output id="heatOut">300 K</output></span>
+        <input type="range" id="heat" min="0" max="1" step="0.01" value="0" />
+      </label>
+
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="tLabels" checked /><span></span>Labels</label>
+        <label class="tg"><input type="checkbox" id="tShells" checked /><span></span>Shell rings</label>
+        <label class="tg"><input type="checkbox" id="tTrails" checked /><span></span>Electron trails</label>
+        <label class="tg"><input type="checkbox" id="tClouds" checked /><span></span>Orbital clouds</label>
+        <label class="tg"><input type="checkbox" id="tAssist" checked /><span></span>Bond attraction</label>
+        <label class="tg"><input type="checkbox" id="tFollow" /><span></span>Camera follow</label>
+      </div>
+
+      <div class="sub">Highlight</div>
+      <div class="seg wide" id="hlSeg">
+        <button data-hl="none" class="on">None</button>
+        <button data-hl="proton"><b class="dot p"></b>p⁺</button>
+        <button data-hl="neutron"><b class="dot n"></b>n⁰</button>
+        <button data-hl="electron"><b class="dot e"></b>e⁻</button>
+      </div>
+
+      <div class="row3">
+        <button id="breakBtn" class="btn warn" title="B">⚡ Break bonds</button>
+        <button id="removeBtn" class="btn" title="Delete">✕ Remove</button>
+        <button id="resetBtn" class="btn" title="Shift+R">↺ Reset</button>
+      </div>
+    </div>
+  </aside>
+
+  <aside id="info" class="glass panel">
+    <button class="panel-head" data-collapse="info"><span>Atom &amp; molecules</span><i class="chev"></i></button>
+    <div class="panel-body">
+      <div class="el-card">
+        <div class="el-tile" id="elTile"><small id="elZ">6</small><b id="elSym">C</b><em id="elMass">12.011</em></div>
+        <div class="el-meta">
+          <h3 id="elName">Carbon</h3>
+          <div class="kv"><span>Electron config</span><b id="elConfig">1s² 2s² 2p²</b></div>
+          <div class="kv"><span>Valence</span><b id="elValence">4</b></div>
+          <div class="kv"><span>Bonds used</span><b id="elBonds">0 / 4</b></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="kv"><span>Protons</span><b id="elP">6</b></div>
+        <div class="kv"><span>Neutrons</span><b id="elN">6</b></div>
+        <div class="kv"><span>Electrons</span><b id="elE">6</b></div>
+        <div class="kv"><span>Electronegativity</span><b id="elEN">2.55</b></div>
+        <div class="kv"><span>Hybridization</span><b id="elHyb">—</b></div>
+        <div class="kv"><span>Bond angle</span><b id="elAngle">—</b></div>
+      </div>
+      <ul class="facts" id="elFacts"></ul>
+      <div class="sub">Molecules in scene</div>
+      <ul class="mols" id="molList"></ul>
+    </div>
+  </aside>
+
+  <div id="palette" class="glass">
+    <span class="pal-label">Add atom</span>
+    <button class="el-btn el-H" data-spawn="H" title="Hydrogen (1)"><b>H</b><small>1</small></button>
+    <button class="el-btn el-C" data-spawn="C" title="Carbon (2)"><b>C</b><small>6</small></button>
+    <button class="el-btn el-N" data-spawn="N" title="Nitrogen (3)"><b>N</b><small>7</small></button>
+    <button class="el-btn el-O" data-spawn="O" title="Oxygen (4)"><b>O</b><small>8</small></button>
+    <span class="pal-sep"></span>
+    <select id="demoSel" aria-label="Build a molecule">
+      <option value="">Build molecule…</option>
+      <option value="ch4">CH₄ methane</option>
+      <option value="co2">CO₂ carbon dioxide</option>
+      <option value="c2h6">C₂H₆ ethane</option>
+      <option value="c2h4">C₂H₄ ethylene</option>
+      <option value="c2h2">C₂H₂ acetylene</option>
+      <option value="hcn">HCN hydrogen cyanide</option>
+      <option value="co">CO carbon monoxide</option>
+      <option value="h2o">H₂O water</option>
+      <option value="nh3">NH₃ ammonia</option>
+      <option value="ch3oh">CH₃OH methanol</option>
+      <option value="sandbox">Sandbox: C + 4H + 2O</option>
+    </select>
+  </div>
+
+  <div id="hint" class="glass">
+    <b>Drag</b> a nucleus to move it · <b>WASD/↑↓←→</b> move selected (Q/E depth) · <b>Space</b> pause · <b>V</b> view · drag empty space to orbit, scroll/pinch to zoom
+  </div>
+
+  <div id="legend" class="glass">
+    <div class="lg-title">Orbital clouds · |ψ|² samples</div>
+    <div><i style="background:#ffc761"></i>1s</div>
+    <div><i style="background:#33f2cc"></i>2s (+) <i style="background:#e64df2;margin-left:8px"></i>(−) inside node</div>
+    <div><i style="background:#4d9eff"></i>2p<sub>x</sub> <i style="background:#59ff73;margin-left:8px"></i>2p<sub>y</sub> <i style="background:#ff73d9;margin-left:8px"></i>2p<sub>z</sub></div>
+    <div class="lg-dim">light = + phase · deep = − phase lobe</div>
+  </div>
+
+  <div id="tooltip"></div>
+  <div id="toasts"></div>
+  <div id="fps">— fps</div>
+
+  <noscript><p class="noscript">This visualization needs JavaScript and WebGL.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
