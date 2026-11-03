@@ -7,6 +7,10 @@ drag atoms together and watch covalent bonds form with realistic geometry.
 
 ![Carbon atom, Bohr view](screenshots/01-carbon-bohr.png)
 
+A second page, the **[Mixtures Lab](solution-colloid-suspension/)**, puts a solution, a colloid, and a suspension side by side in glass beakers. Play the clock to watch only the suspension settle, stir it back, and turn on a laser to see the Tyndall effect.
+
+![Solution, colloid, and suspension](screenshots/11-mixtures-tyndall.png)
+
 | Quantum orbitals | Methane CH₄ (109.5°) | Carbon dioxide CO₂ (180°, two C=O) |
 |---|---|---|
 | ![](screenshots/02-carbon-quantum.png) | ![](screenshots/03-methane-ch4.png) | ![](screenshots/04-carbon-dioxide-co2.png) |
@@ -150,20 +154,43 @@ python3 -m http.server 8000
 python3 -m http.server 8812 --bind 127.0.0.1 &
 npm i playwright && npx playwright install chromium   # once
 node tests/screenshots.cjs http://127.0.0.1:8812/
+node tests/mixtures.cjs http://127.0.0.1:8812/solution-colloid-suspension/
 # or point it at an installed Chrome: CHROME=/usr/bin/google-chrome node tests/screenshots.cjs
 ```
+
+## Mixtures Lab
+
+`solution-colloid-suspension/` is a second static page (same Three.js r160 import map, no build). Three glass beakers sit on a bench:
+
+* **Solution** — clear water. Dissolved ions are evenly spread, too small to see until you magnify, and they never settle. The laser leaves no path, only a bright spot where it exits.
+* **Colloid** — milky liquid. Medium particles jitter with Brownian motion and stay dispersed. The beam swells into a visible shaft (Tyndall effect). Think milk, fog, gelatin.
+* **Suspension** — muddy when stirred. Large grains sink, faster when they're bigger, and pile up as sediment. The liquid above clears and the beam fades. Stir remixes it. Muddy water, sand in water. This is the one you can filter.
+
+Controls: play / pause and a time slider, Stir, a light-beam toggle, and Magnify (relative sizes, not to scale). Orbit, zoom, and pan work with a mouse or with touch. The comparison table lists appearance, settling, particle size, Tyndall effect, filterability, and examples.
+
+```bash
+python3 -m http.server 8000
+# open http://localhost:8000/solution-colloid-suspension/
+```
+
+GitHub Pages serves it at `https://russellambriz.github.io/interactive-atoms/solution-colloid-suspension/` once this folder is on `main`.
+
+`window.mixturesLab` exposes `setSettle`, `setLaser`, `setMagnify`, `stir`, `play`, `pause`, `advance(seconds)`, and `state()` (mean particle height per beaker, turbidity, fps). URL flags: `settle`, `laser=0`, `magnify=1`, `pause=1`, `play=1`, `focus`, `ui=0`, `capture`.
+
+Honest simplifications: particle sizes are exaggerated so a person can see them (a real colloid particle is still invisible; the cloudiness is the crowd). Settling is sped up. Larger grains fall faster, in the spirit of Stokes' law, but viscosity is not simulated. The beam's thickness stands in for scattered intensity. Filtration is explained in the table, not animated.
 
 ## Project layout
 
 ```
-index.html          UI markup + importmap
+index.html          Carbon lab UI + link to the mixtures lab
 css/style.css       glassmorphism UI, responsive layout
 js/main.js          renderer, bloom, camera, input (drag/keys/touch), UI wiring, demos, debug hook
 js/world.js         atoms, electrons, bonds, physics, chemistry rules, molecule naming, instanced rendering, picking
 js/orbitals.js      |ψ|² sampling for 1s/2s/2p and the point-cloud shader
 js/background.js    nebula gradient dome + starfield
 js/data.js          element data, bond lengths/enthalpies, molecule names
-tests/              headless Playwright smoke test
+solution-colloid-suspension/   mixtures lab (own index, css, js)
+tests/              headless Playwright smoke tests
 screenshots/        captured output
 ```
 

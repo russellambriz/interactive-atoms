@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Mixtures Lab · Solution, Colloid, Suspension</title>
+  <meta name="description" content="Interactive 3D comparison of a solution, a colloid, and a suspension: settling, Brownian motion, and the Tyndall effect." />
+  <meta name="theme-color" content="#070b12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mixtures Lab" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='18' y='8' width='28' height='40' rx='4' fill='none' stroke='%239ee7ff' stroke-width='3'/%3E%3Cpath d='M22 30h20' stroke='%23f3ead7' stroke-width='3'/%3E%3Ccircle cx='28' cy='38' r='2' fill='%23e7a15a'/%3E%3Ccircle cx='36' cy='42' r='3' fill='%23e7a15a'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="loading"><div class="spinner"></div><p>Setting up the bench…</p></div>
+
+  <header id="title" class="glass">
+    <a class="back" href="../" title="Back to Carbon Atom Lab">← Atoms</a>
+    <div class="logo" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="title-text">
+      <h1>Mixtures Lab</h1>
+      <p>Solution · colloid · suspension</p>
+    </div>
+  </header>
+
+  <div id="lesson" class="glass" aria-live="polite"></div>
+
+  <div id="dock">
+  <aside id="controls" class="glass panel">
+    <button class="panel-head" type="button" data-collapse="controls" aria-expanded="true"><span>Controls</span><i class="chev"></i></button>
+    <div class="panel-body">
+      <div class="row3">
+        <button id="playBtn" class="btn primary" type="button" title="Play or pause settling (Space)">▶ Play</button>
+        <button id="stirBtn" class="btn" type="button" title="Remix the suspension (S)">↻ Stir</button>
+        <button id="frameBtn" class="btn" type="button" title="Frame all three beakers (F)">⟲ View</button>
+      </div>
+      <label class="slider">
+        <span>Time <output id="settleOut">Just mixed</output></span>
+        <input type="range" id="settle" min="0" max="1" step="0.001" value="0" aria-label="Settling time" />
+      </label>
+      <p class="fine">Larger suspension grains sink faster. Solutions and colloids never settle.</p>
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="tLaser" checked /><span></span>Light beam</label>
+        <label class="tg"><input type="checkbox" id="tMag" /><span></span>Magnify</label>
+      </div>
+      <p class="fine" id="magHint">Magnify exaggerates particle size so you can compare them. Real sizes differ by thousands of times.</p>
+    </div>
+  </aside>
+
+  <section id="compare" class="glass panel" aria-label="Comparison of solution, colloid, and suspension">
+    <button class="panel-head" type="button" data-collapse="compare" aria-expanded="true"><span>Compare</span><i class="chev"></i></button>
+    <div class="panel-body">
+      <table id="cmp">
+        <caption>Same solvent. Different particle size.</caption>
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col"><button type="button" data-focus="solution">Solution</button></th>
+            <th scope="col"><button type="button" data-focus="colloid">Colloid</button></th>
+            <th scope="col"><button type="button" data-focus="suspension">Suspension</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Appearance</th>
+            <td>Transparent</td>
+            <td>Cloudy</td>
+            <td>Cloudy</td>
+          </tr>
+          <tr>
+            <th scope="row">Settles?</th>
+            <td><b class="no">No</b></td>
+            <td><b class="no">No</b></td>
+            <td><b class="yes">Yes</b></td>
+          </tr>
+          <tr>
+            <th scope="row">Particle size</th>
+            <td>&lt; 1 nm</td>
+            <td>1–1000 nm</td>
+            <td>&gt; 1000 nm</td>
+          </tr>
+          <tr>
+            <th scope="row">Tyndall effect</th>
+            <td>No</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">Filterable</th>
+            <td>No</td>
+            <td>No</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <th scope="row">Examples</th>
+            <td>Salt water, sugar water</td>
+            <td>Milk, fog, gelatin</td>
+            <td>Muddy water, sand in water</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="fine foot">Dissolved ions stay evenly spread and do not scatter a beam. Colloid particles jitter (Brownian motion) and stay up. Suspension particles sink into sediment and can be caught by filter paper.</p>
+    </div>
+  </section>
+  </div>
+
+  <div id="tags" aria-hidden="false">
+    <button class="mix-tag" type="button" data-focus="solution"><b>Solution</b><span>ions · stays clear</span></button>
+    <button class="mix-tag" type="button" data-focus="colloid"><b>Colloid</b><span>Brownian · Tyndall</span></button>
+    <button class="mix-tag" type="button" data-focus="suspension"><b>Suspension</b><span>sinks · filterable</span></button>
+  </div>
+
+  <div id="magnote" class="glass">Magnified teaching view · sizes are relative, not to scale</div>
+
+  <div id="hint" class="glass">
+    <span class="hint-kb"><b>Drag</b> to orbit · <b>scroll</b> to zoom · <b>Space</b> play · <b>S</b> stir · <b>L</b> light · <b>M</b> magnify · <b>1 2 3</b> focus a beaker</span>
+    <span class="hint-touch"><b>Drag</b> to orbit · <b>pinch</b> to zoom · tap a beaker to focus it</span>
+  </div>
+
+  <noscript><p class="noscript">This visualization needs JavaScript and WebGL.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
